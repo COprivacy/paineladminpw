@@ -2,13 +2,14 @@
 
 import React from 'react';
 import { StoreItem, PWUserProfile } from '@/types/store';
-import { Zap, ShieldCheck, Circle, Layers, Gem, Coins, Shield } from 'lucide-react';
+import { Zap, ShieldCheck, Circle, Layers, Gem, Coins } from 'lucide-react';
 
 interface DiscordProfileCardProps {
   user?: PWUserProfile;
   previewDecoration?: StoreItem | null;
   previewEffect?: StoreItem | null;
   previewNameplate?: StoreItem | null;
+  previewTheme?: StoreItem | null;
   className?: string;
 }
 
@@ -30,11 +31,13 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
   previewDecoration,
   previewEffect,
   previewNameplate,
+  previewTheme,
   className = '',
 }) => {
   const activeDec = previewDecoration !== undefined ? previewDecoration : user.activeDecoration;
   const activeEff = previewEffect !== undefined ? previewEffect : user.activeEffect;
   const activeNmp = previewNameplate !== undefined ? previewNameplate : user.activeNameplate;
+  const activeTheme = previewTheme !== undefined ? previewTheme : user.activeTheme;
 
   // Determine decoration visual animation class
   const getDecorationAnimClass = () => {
@@ -65,8 +68,18 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
     offline: 'bg-[#80848e]',
   };
 
+  // Determine theme card style
+  const themeStyle = activeTheme
+    ? {
+        background: `linear-gradient(180deg, ${activeTheme.config?.bannerColor || '#232428'} 0%, #18191c 100%)`,
+        borderColor: activeTheme.config?.gradientColors?.[0] || activeTheme.config?.accentColor || '#5865F2',
+        boxShadow: `0 0 24px ${activeTheme.config?.gradientColors?.[0] || '#5865F2'}33`,
+      }
+    : undefined;
+
   return (
     <div
+      style={themeStyle}
       className={`w-full max-w-[340px] rounded-2xl bg-[#232428] text-[#dbdee1] shadow-2xl border border-[#383a40] overflow-hidden select-none transition-all ${className}`}
     >
       {/* BANNER WITH PROFILE EFFECT */}

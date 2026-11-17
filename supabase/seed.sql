@@ -3,12 +3,13 @@
 -- ==============================================================================
 
 -- 1. PLANOS NITRO (ASSINATURAS VIP)
-INSERT INTO public.subscription_plans (id, name, badge_name, monthly_price_brl, yearly_price_brl, monthly_coins_bonus, color, perks)
+INSERT INTO public.subscription_plans (id, name, badge_name, badge_icon, monthly_price_brl, yearly_price_brl, monthly_coins_bonus, color, perks)
 VALUES
 (
     'nitro_basic',
     'PW Nitro Basic',
     'Assinante Basic',
+    'zap',
     14.90,
     149.00,
     300,
@@ -19,6 +20,7 @@ VALUES
     'nitro_booster',
     'PW Nitro Booster',
     'Apoiador Nitro',
+    'award',
     29.90,
     299.00,
     800,
@@ -29,6 +31,7 @@ VALUES
     'nitro_ultimate',
     'PW Nitro Ultimate',
     'Membro Lendário',
+    'crown',
     49.90,
     499.00,
     2000,
@@ -37,8 +40,12 @@ VALUES
 )
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
+    badge_name = EXCLUDED.badge_name,
+    badge_icon = EXCLUDED.badge_icon,
     monthly_price_brl = EXCLUDED.monthly_price_brl,
     yearly_price_brl = EXCLUDED.yearly_price_brl,
+    monthly_coins_bonus = EXCLUDED.monthly_coins_bonus,
+    color = EXCLUDED.color,
     perks = EXCLUDED.perks;
 
 -- 2. MOLDURAS DE AVATAR (AVATAR DECORATIONS)
@@ -79,7 +86,7 @@ VALUES
     450,
     'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=300',
     'https://images.unsplash.com/photo-1522383225653-ed111181a951?w=300',
-    '{"animationType": "sakura", "gradientColors": ["#FFB7B2", "#FF69B4"], "tag": "Primavera"}'::jsonb,
+    '{"animationType": "wave", "gradientColors": ["#FFB7B2", "#FF69B4"], "tag": "Primavera"}'::jsonb,
     false,
     false
 ),
@@ -122,7 +129,7 @@ VALUES
     500,
     'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500',
     'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500',
-    '{"animationType": "sakura", "bannerColor": "#2b101c", "accentColor": "#ff73fa"}'::jsonb,
+    '{"animationType": "wave", "bannerColor": "#2b101c", "accentColor": "#ff73fa"}'::jsonb,
     false,
     false
 ),
@@ -135,7 +142,7 @@ VALUES
     1200,
     'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=500',
     'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=500',
-    '{"animationType": "sparkle", "bannerColor": "#050014", "accentColor": "#8045ff"}'::jsonb,
+    '{"animationType": "glow", "bannerColor": "#050014", "accentColor": "#8045ff"}'::jsonb,
     true,
     true
 );

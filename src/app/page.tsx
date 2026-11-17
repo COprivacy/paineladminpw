@@ -27,20 +27,14 @@ import {
   Flame,
   Crown,
   Coins,
-  Package,
-  Users,
   CheckCircle2,
-  AlertCircle,
   Copy,
-  ExternalLink,
   RefreshCw,
   Trash2,
   Edit,
   Eye,
   Gift,
   Database,
-  ArrowRight,
-  Shield,
   Zap,
   Award,
   Store,
@@ -54,6 +48,7 @@ export default function AdminPWShopPage() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionTier[]>(INITIAL_SUBSCRIPTIONS);
   const [users, setUsers] = useState<PWUserProfile[]>(INITIAL_USERS);
   const [orders, setOrders] = useState<StoreOrder[]>(INITIAL_ORDERS);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -64,11 +59,13 @@ export default function AdminPWShopPage() {
   const [editingItem, setEditingItem] = useState<StoreItem | null>(null);
   const [productModalDefaultCategory, setProductModalDefaultCategory] = useState<ProductCategory>('avatar_decoration');
   const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
+  const [grantTargetUserId, setGrantTargetUserId] = useState<string | undefined>(undefined);
 
   // Live Preview Target
   const [previewDecoration, setPreviewDecoration] = useState<StoreItem | null>(INITIAL_ITEMS[0]);
   const [previewEffect, setPreviewEffect] = useState<StoreItem | null>(INITIAL_ITEMS[3]);
   const [previewNameplate, setPreviewNameplate] = useState<StoreItem | null>(INITIAL_ITEMS[6]);
+  const [previewTheme, setPreviewTheme] = useState<StoreItem | null>(null);
   const [previewUser, setPreviewUser] = useState<PWUserProfile>(INITIAL_USERS[0]);
 
   // Sync Status notification
@@ -78,14 +75,76 @@ export default function AdminPWShopPage() {
   });
 
   // Test Ping from API
-  const [apiStatus, setApiStatus] = useState<any>(null);
+  interface SyncApiStatus {
+    status: string;
+    timestamp: string;
+    services: {
+      supabase: {
+        configured: boolean;
+        itemCount: number;
+        error: string | null;
+        url: string;
+      };
+      firebase: {
+        configured: boolean;
+        webhookUrl: string;
+      };
+    };
+  }
+
+  const [apiStatus, setApiStatus] = useState<SyncApiStatus | null>(null);
   const [isTestingPing, setIsTestingPing] = useState(false);
 
+  const applyLoadedProducts = (loadedItems: StoreItem[]) => {
+    setItems(loadedItems);
+    const defaultDec = loadedItems.find((i) => i.category === 'avatar_decoration');
+    const defaultEff = loadedItems.find((i) => i.category === 'profile_effect');
+    const defaultNmp = loadedItems.find((i) => i.category === 'nameplate');
+    if (defaultDec) setPreviewDecoration(defaultDec);
+    if (defaultEff) setPreviewEffect(defaultEff);
+    if (defaultNmp) setPreviewNameplate(defaultNmp);
+  };
+
+  // 1. CARREGAR PRODUTOS DO SUPABASE (OU MEMÓRIA) NO MOUNT E NO BOTÃO RECARREGAR
+  const fetchProducts = async () => {
+    setIsLoadingProducts(true);
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items && Array.isArray(data.items)) {
+          applyLoadedProducts(data.items);
+        }
+      }
+    } catch (e: unknown) {
+      console.error('Erro ao buscar produtos:', e);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
   useEffect(() => {
+    let cancelled = false;
+
+    fetch('/api/products')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.items && Array.isArray(data.items)) {
+          applyLoadedProducts(data.items);
+        }
+      })
+      .catch((e: unknown) => console.error('Erro ao carregar produtos iniciais:', e));
+
     fetch('/api/sync-pw')
-      .then((res) => res.json())
-      .then((data) => setApiStatus(data))
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: SyncApiStatus | null) => {
+        if (!cancelled && data) setApiStatus(data);
+      })
       .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const triggerSyncNotification = (msg: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -95,77 +154,207 @@ export default function AdminPWShopPage() {
     }, 4000);
   };
 
-  // Product Actions
-  const handleSaveProduct = (itemData: Partial<StoreItem>) => {
-    if (itemData.id) {
-      // Edit
-      setItems((prev) =>
-        prev.map((it) => (it.id === itemData.id ? ({ ...it, ...itemData, updatedAt: new Date().toISOString() } as StoreItem) : it))
-      );
-      triggerSyncNotification(`"${itemData.title}" atualizado com sucesso no catálogo!`);
-    } else {
-      // Create
-      const newItem: StoreItem = {
-        ...itemData,
-        id: `item-${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      } as StoreItem;
-      setItems((prev) => [newItem, ...prev]);
-      triggerSyncNotification(`Novo item "${newItem.title}" publicado na loja do PW!`);
+  // 2. SALVAR PRODUTO COM PERSISTÊNCIA REAL NA API / SUPABASE
+  const handleSaveProduct = async (itemData: Partial<StoreItem>) => {
+    try {
+      if (itemData.id) {
+        // Atualização (PUT)
+        const res = await fetch('/api/products', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(itemData),
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          const savedItem = (result.item || {
+            ...items.find((i) => i.id === itemData.id),
+            ...itemData,
+            updatedAt: new Date().toISOString(),
+          }) as StoreItem;
+
+          setItems((prev) =>
+            prev.map((it) => (it.id === itemData.id ? savedItem : it))
+          );
+
+          // Mantém o preview sincronizado se o item editado estiver em exibição
+          if (previewDecoration?.id === savedItem.id) setPreviewDecoration(savedItem);
+          if (previewEffect?.id === savedItem.id) setPreviewEffect(savedItem);
+          if (previewNameplate?.id === savedItem.id) setPreviewNameplate(savedItem);
+          if (previewTheme?.id === savedItem.id) setPreviewTheme(savedItem);
+
+          triggerSyncNotification(`"${savedItem.title}" atualizado e persistido no banco!`);
+        } else {
+          throw new Error(result.message || 'Falha ao atualizar produto.');
+        }
+      } else {
+        // Criação (POST)
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(itemData),
+        });
+        const result = await res.json();
+
+        if (result.success && result.item) {
+          setItems((prev) => [result.item, ...prev]);
+          triggerSyncNotification(`"${result.item.title}" salvo e notificado ao Firebase!`);
+        } else {
+          throw new Error(result.message || 'Falha ao salvar produto.');
+        }
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
+      triggerSyncNotification(`Erro ao salvar produto: ${msg}`, 'error');
+      throw e;
     }
   };
 
-  const handleDeleteProduct = (id: string) => {
+  // 3. EXCLUIR PRODUTO COM PERSISTÊNCIA REAL
+  const handleDeleteProduct = async (id: string) => {
     const item = items.find((i) => i.id === id);
-    if (confirm(`Tem certeza que deseja remover "${item?.title || 'este produto'}" da loja?`)) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
-      triggerSyncNotification(`Item removido da loja e sincronizado.`);
+    if (!confirm(`Tem certeza que deseja remover "${item?.title || 'este produto'}" da loja?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/products?id=${id}`, {
+        method: 'DELETE',
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        if (previewDecoration?.id === id) setPreviewDecoration(null);
+        if (previewEffect?.id === id) setPreviewEffect(null);
+        if (previewNameplate?.id === id) setPreviewNameplate(null);
+        if (previewTheme?.id === id) setPreviewTheme(null);
+        triggerSyncNotification(`Item removido do banco e catálogo sincronizado.`);
+      } else {
+        throw new Error(result.message || 'Falha ao excluir item.');
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
+      triggerSyncNotification(`Erro ao excluir: ${msg}`, 'error');
     }
   };
 
-  const handleToggleActive = (id: string) => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, isActive: !i.isActive } : i))
-    );
-    triggerSyncNotification(`Status do item alterado na loja.`);
+  // 4. ALTERAR STATUS (ATIVO / PAUSADO) COM PERSISTÊNCIA
+  const handleToggleActive = async (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+
+    const newStatus = !item.isActive;
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isActive: newStatus }),
+      });
+      const result = await res.json();
+
+      if (result.success) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, isActive: newStatus } : i))
+        );
+        triggerSyncNotification(`Status do item alterado para ${newStatus ? 'Ativo' : 'Pausado'}.`);
+      } else {
+        throw new Error(result.message || 'Falha ao atualizar status.');
+      }
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
+      triggerSyncNotification(`Erro ao alterar status: ${msg}`, 'error');
+    }
   };
 
-  const handleGrantItemToUser = (userId: string, itemId: string) => {
+  // 5. CONCESSÃO DE COSMÉTICOS OU MOEDAS A USUÁRIO (COM API + WEBHOOK)
+  const handleGrantItemToUser = async (userId: string, itemId: string) => {
     const targetItem = items.find((i) => i.id === itemId);
+    const targetUser = users.find((u) => u.id === userId);
+
+    const res = await fetch('/api/users/grant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, grantType: 'item', itemId }),
+    });
+    const result = await res.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Erro ao entregar item.');
+    }
+
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id === userId) {
+          const uniqueInventory = Array.from(new Set([...u.inventoryItemIds, itemId]));
           return {
             ...u,
-            inventoryItemIds: [...u.inventoryItemIds, itemId],
+            inventoryItemIds: uniqueInventory,
             activeDecoration: targetItem?.category === 'avatar_decoration' ? targetItem : u.activeDecoration,
             activeEffect: targetItem?.category === 'profile_effect' ? targetItem : u.activeEffect,
+            activeNameplate: targetItem?.category === 'nameplate' ? targetItem : u.activeNameplate,
+            activeTheme: targetItem?.category === 'profile_theme' ? targetItem : u.activeTheme,
           };
         }
         return u;
       })
     );
-    triggerSyncNotification(`Item "${targetItem?.title}" entregue no inventário do usuário!`);
+
+    if (targetItem && targetUser) {
+      setOrders((prev) => [
+        {
+          id: `ord-${Date.now().toString().slice(-4)}`,
+          userId,
+          username: targetUser.username,
+          itemId,
+          itemTitle: targetItem.title,
+          category: targetItem.category,
+          amountBRL: 0,
+          amountCoins: 0,
+          paymentMethod: 'admin_grant',
+          status: 'completed',
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
+    }
+
+    triggerSyncNotification(`Item "${targetItem?.title}" entregue no inventário de @${targetUser?.username}!`);
   };
 
-  const handleGrantCoinsToUser = (userId: string, amount: number) => {
+  const handleGrantCoinsToUser = async (userId: string, amount: number) => {
+    const targetUser = users.find((u) => u.id === userId);
+    const res = await fetch('/api/users/grant', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, grantType: 'coins', coinsAmount: amount }),
+    });
+    const result = await res.json();
+    if (!result.success) {
+      throw new Error(result.message || 'Erro ao creditar moedas.');
+    }
+
     setUsers((prev) =>
       prev.map((u) => (u.id === userId ? { ...u, coinsBalance: u.coinsBalance + amount } : u))
     );
-    triggerSyncNotification(`${amount} PW Coins creditadas na carteira do usuário!`);
+    triggerSyncNotification(`${amount} PW Coins creditadas para @${targetUser?.username}!`);
   };
 
-  // Filter items
+  // 6. FILTRO CORRIGIDO: AGRUPA BADGES E NAMEPLATES E INCLUI TEMAS DE PERFIL
   const filteredItems = items.filter((item) => {
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
+
+    const matchesCategory =
+      filterCategory === 'all' ||
+      item.category === filterCategory ||
+      (filterCategory === 'badge' && (item.category === 'badge' || item.category === 'nameplate'));
+
     return matchesSearch && matchesCategory;
   });
 
   const itemsCount = {
+    total: items.length,
     decorations: items.filter((i) => i.category === 'avatar_decoration').length,
     effects: items.filter((i) => i.category === 'profile_effect').length,
     badges: items.filter((i) => i.category === 'badge' || i.category === 'nameplate').length,
@@ -174,10 +363,19 @@ export default function AdminPWShopPage() {
     bundles: items.filter((i) => i.category === 'bundle').length,
   };
 
+  const getDefaultCategoryForTab = (): ProductCategory => {
+    if (activeTab === 'effects') return 'profile_effect';
+    if (activeTab === 'badges_names') return 'badge';
+    if (activeTab === 'coins') return 'coin_pack';
+    if (activeTab === 'bundles') return 'bundle';
+    if (filterCategory !== 'all') return filterCategory as ProductCategory;
+    return 'avatar_decoration';
+  };
+
   // Open modal helper
-  const openCreateModal = (cat: ProductCategory) => {
+  const openCreateModal = (cat?: ProductCategory) => {
     setEditingItem(null);
-    setProductModalDefaultCategory(cat);
+    setProductModalDefaultCategory(cat || getDefaultCategoryForTab());
     setIsProductModalOpen(true);
   };
 
@@ -203,8 +401,9 @@ export default function AdminPWShopPage() {
       triggerSyncNotification(data.message || 'Ping executado com sucesso!', 'success');
       const getRes = await fetch('/api/sync-pw');
       setApiStatus(await getRes.json());
-    } catch (e: any) {
-      triggerSyncNotification(`Erro no teste: ${e.message}`, 'error');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Erro desconhecido';
+      triggerSyncNotification(`Erro no teste: ${msg}`, 'error');
     } finally {
       setIsTestingPing(false);
     }
@@ -265,9 +464,19 @@ export default function AdminPWShopPage() {
               <Search className="w-3.5 h-3.5 text-[#949ba4] absolute left-2.5 top-2.5" />
             </div>
 
+            {/* Reload from Supabase Button */}
+            <button
+              onClick={fetchProducts}
+              disabled={isLoadingProducts}
+              className="p-1.5 rounded-md bg-[#1e1f22] hover:bg-[#35373c] text-[#949ba4] hover:text-white transition-colors"
+              title="Recarregar produtos do banco"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingProducts ? 'animate-spin text-[#5865f2]' : ''}`} />
+            </button>
+
             {/* Create Product Button */}
             <button
-              onClick={() => openCreateModal('avatar_decoration')}
+              onClick={() => openCreateModal()}
               className="flex items-center gap-1.5 bg-[#5865f2] hover:bg-[#4752c4] text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow transition-all"
             >
               <Plus className="w-3.5 h-3.5" />
@@ -335,7 +544,10 @@ export default function AdminPWShopPage() {
                         <Layers className="w-3.5 h-3.5 text-purple-400" /> Adicionar Efeito de Perfil
                       </button>
                       <button
-                        onClick={() => setIsGrantModalOpen(true)}
+                        onClick={() => {
+                          setGrantTargetUserId(undefined);
+                          setIsGrantModalOpen(true);
+                        }}
                         className="bg-[#23a55a] hover:bg-[#1d8246] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
                       >
                         <Gift className="w-3.5 h-3.5" /> Conceder Item a Usuário
@@ -352,6 +564,7 @@ export default function AdminPWShopPage() {
                       { id: 'avatar_decoration', label: 'Molduras de Avatar' },
                       { id: 'profile_effect', label: 'Efeitos de Perfil' },
                       { id: 'badge', label: 'Insígnias & Nomes' },
+                      { id: 'profile_theme', label: 'Temas de Perfil' },
                       { id: 'coin_pack', label: 'Pacotes de Moedas' },
                       { id: 'bundle', label: 'Bundles' },
                     ].map((cat) => (
@@ -376,7 +589,11 @@ export default function AdminPWShopPage() {
 
                 {/* PRODUCT CARDS GRID */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredItems.map((item) => (
+                  {filteredItems.map((item) => {
+                    const isCssGradient =
+                      (item.previewUrl || item.assetUrl || '').startsWith('linear-gradient');
+
+                    return (
                     <div
                       key={item.id}
                       className="group bg-[#2b2d31] rounded-2xl border border-[#383a40] overflow-hidden hover:border-[#5865f2]/60 hover:shadow-xl transition-all duration-200 flex flex-col justify-between"
@@ -404,7 +621,7 @@ export default function AdminPWShopPage() {
                           {item.category === 'profile_effect' && (
                             <div className="w-full h-full relative">
                               <img
-                                src={item.previewUrl}
+                                src={item.previewUrl || item.assetUrl}
                                 alt={item.title}
                                 className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300"
                               />
@@ -416,13 +633,62 @@ export default function AdminPWShopPage() {
                             </div>
                           )}
 
-                          {item.category !== 'avatar_decoration' && item.category !== 'profile_effect' && (
-                            <img
-                              src={item.previewUrl}
-                              alt={item.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            />
+                          {(item.category === 'nameplate' || isCssGradient) && (
+                            <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-[#16171a]">
+                              <div className="px-4 py-2 rounded-xl bg-[#232428] border border-[#383a40] shadow-inner">
+                                <span
+                                  className="text-lg font-extrabold tracking-tight"
+                                  style={{
+                                    background:
+                                      item.config?.gradientColors
+                                        ? `linear-gradient(90deg, ${item.config.gradientColors[0]}, ${item.config.gradientColors[1]})`
+                                        : item.previewUrl || item.assetUrl,
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                  }}
+                                >
+                                  @Usuario_PW
+                                </span>
+                              </div>
+                              <span className="mt-2 text-[10px] text-[#949ba4] uppercase tracking-wider">
+                                Estilo de Nome
+                              </span>
+                            </div>
                           )}
+
+                          {item.category === 'profile_theme' && !isCssGradient && (
+                            <div
+                              className="w-full h-full flex items-center justify-center p-4"
+                              style={{
+                                background: `linear-gradient(135deg, ${item.config?.bannerColor || '#1e1f22'}, ${item.config?.gradientColors?.[0] || '#5865F2'}55)`,
+                              }}
+                            >
+                              <div
+                                className="w-36 h-20 rounded-xl border-2 bg-[#232428]/90 p-2 flex flex-col justify-between shadow-lg"
+                                style={{
+                                  borderColor: item.config?.gradientColors?.[0] || '#5865F2',
+                                }}
+                              >
+                                <div className="h-5 rounded bg-white/10" />
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-5 h-5 rounded-full bg-white/20" />
+                                  <div className="h-2 w-16 rounded bg-white/20" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.category !== 'avatar_decoration' &&
+                            item.category !== 'profile_effect' &&
+                            item.category !== 'nameplate' &&
+                            item.category !== 'profile_theme' &&
+                            !isCssGradient && (
+                              <img
+                                src={item.previewUrl || item.assetUrl}
+                                alt={item.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                            )}
 
                           {/* Top Badges */}
                           <div className="absolute top-2 left-2 flex items-center gap-1.5">
@@ -440,6 +706,7 @@ export default function AdminPWShopPage() {
                               if (item.category === 'avatar_decoration') setPreviewDecoration(item);
                               if (item.category === 'profile_effect') setPreviewEffect(item);
                               if (item.category === 'nameplate') setPreviewNameplate(item);
+                              if (item.category === 'profile_theme') setPreviewTheme(item);
                               triggerSyncNotification(`Testando "${item.title}" no Card de Perfil ao lado!`, 'info');
                             }}
                             className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 hover:bg-[#5865f2] text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -506,7 +773,8 @@ export default function AdminPWShopPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -617,7 +885,10 @@ export default function AdminPWShopPage() {
                     </p>
                   </div>
                   <button
-                    onClick={() => setIsGrantModalOpen(true)}
+                    onClick={() => {
+                      setGrantTargetUserId(undefined);
+                      setIsGrantModalOpen(true);
+                    }}
                     className="flex items-center gap-1.5 bg-[#23a55a] hover:bg-[#1d8246] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow"
                   >
                     <Gift className="w-4 h-4" />
@@ -705,6 +976,7 @@ export default function AdminPWShopPage() {
                                   setPreviewDecoration(usr.activeDecoration || null);
                                   setPreviewEffect(usr.activeEffect || null);
                                   setPreviewNameplate(usr.activeNameplate || null);
+                                  setPreviewTheme(usr.activeTheme || null);
                                   triggerSyncNotification(`Inspecionando perfil de @${usr.username}`, 'info');
                                 }}
                                 className="p-1.5 rounded-lg bg-[#1e1f22] hover:bg-[#5865f2] text-white transition-colors"
@@ -713,9 +985,12 @@ export default function AdminPWShopPage() {
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => setIsGrantModalOpen(true)}
+                                onClick={() => {
+                                  setGrantTargetUserId(usr.id);
+                                  setIsGrantModalOpen(true);
+                                }}
                                 className="p-1.5 rounded-lg bg-[#23a55a]/20 hover:bg-[#23a55a] text-[#23a55a] hover:text-white transition-colors"
-                                title="Conceder item ou coins"
+                                title={`Conceder item ou coins para @${usr.username}`}
                               >
                                 <Gift className="w-3.5 h-3.5" />
                               </button>
@@ -737,9 +1012,11 @@ export default function AdminPWShopPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="bg-[#2b2d31] p-5 rounded-2xl border border-[#383a40] space-y-1">
                     <span className="text-xs font-bold uppercase text-[#949ba4]">Faturamento Bruto</span>
-                    <div className="text-2xl font-extrabold text-white">R$ 1.284,50</div>
+                    <div className="text-2xl font-extrabold text-white">
+                      R$ {orders.reduce((acc, o) => acc + (o.status === 'completed' ? o.amountBRL : 0), 0).toFixed(2)}
+                    </div>
                     <div className="text-[11px] text-[#23a55a] flex items-center gap-1">
-                      <span>+18.4% esta semana</span>
+                      <span>{orders.length} pedidos registrados</span>
                     </div>
                   </div>
 
@@ -747,15 +1024,21 @@ export default function AdminPWShopPage() {
                     <span className="text-xs font-bold uppercase text-[#949ba4]">Moedas (Coins) Gastas</span>
                     <div className="text-2xl font-extrabold text-[#f0b232] flex items-center gap-1.5">
                       <Coins className="w-6 h-6" />
-                      <span>48.200</span>
+                      <span>
+                        {orders
+                          .reduce((acc, o) => acc + (o.status === 'completed' ? o.amountCoins : 0), 0)
+                          .toLocaleString('pt-BR')}
+                      </span>
                     </div>
                     <div className="text-[11px] text-[#949ba4]">Em cosméticos na loja</div>
                   </div>
 
                   <div className="bg-[#2b2d31] p-5 rounded-2xl border border-[#383a40] space-y-1">
-                    <span className="text-xs font-bold uppercase text-[#949ba4]">Assinaturas Ativas</span>
-                    <div className="text-2xl font-extrabold text-[#ff73fa]">142 Usuários</div>
-                    <div className="text-[11px] text-[#ff73fa]">PW Nitro Booster</div>
+                    <span className="text-xs font-bold uppercase text-[#949ba4]">Assinantes Nitro</span>
+                    <div className="text-2xl font-extrabold text-[#ff73fa]">
+                      {users.filter((u) => u.subscriptionTier && u.subscriptionTier !== 'none').length} Usuários
+                    </div>
+                    <div className="text-[11px] text-[#ff73fa]">Com plano ativo na base</div>
                   </div>
                 </div>
 
@@ -905,8 +1188,8 @@ export default function AdminPWShopPage() {
                   <div className="bg-[#1e1f22] p-4 rounded-xl border border-[#383a40] font-mono text-xs text-zinc-300 space-y-1">
                     <div className="text-[#5865f2] font-bold">-- Passos para rodar no Supabase:</div>
                     <div>1. Abra o painel do seu projeto no Supabase (https://supabase.com/dashboard).</div>
-                    <div>2. Vá até a aba "SQL Editor" na barra lateral esquerda.</div>
-                    <div>3. Cole o conteúdo de <span className="text-white font-bold">supabase/schema.sql</span> e clique em "Run".</div>
+                    <div>2. Vá até a aba &quot;SQL Editor&quot; na barra lateral esquerda.</div>
+                    <div>3. Cole o conteúdo de <span className="text-white font-bold">supabase/schema.sql</span> e clique em &quot;Run&quot;.</div>
                     <div>4. (Opcional) Cole o conteúdo de <span className="text-white font-bold">supabase/seed.sql</span> para já ter todos os cosméticos carregados.</div>
                   </div>
                 </div>
@@ -950,6 +1233,7 @@ export default function AdminPWShopPage() {
                   previewDecoration={previewDecoration}
                   previewEffect={previewEffect}
                   previewNameplate={previewNameplate}
+                  previewTheme={previewTheme}
                 />
               </div>
 
@@ -977,6 +1261,12 @@ export default function AdminPWShopPage() {
                       {previewNameplate?.title || 'Padrão'}
                     </span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[#949ba4]">Tema:</span>
+                    <span className="text-emerald-400 font-semibold truncate max-w-[180px]">
+                      {previewTheme?.title || 'Padrão'}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="pt-2 border-t border-[#313338] flex gap-2">
@@ -985,6 +1275,7 @@ export default function AdminPWShopPage() {
                       setPreviewDecoration(null);
                       setPreviewEffect(null);
                       setPreviewNameplate(null);
+                      setPreviewTheme(null);
                     }}
                     className="w-full py-1 text-[10px] font-semibold text-[#949ba4] hover:text-white rounded bg-[#2b2d31] hover:bg-[#35373c]"
                   >
@@ -995,6 +1286,7 @@ export default function AdminPWShopPage() {
                       setPreviewDecoration(items.find((i) => i.category === 'avatar_decoration') || null);
                       setPreviewEffect(items.find((i) => i.category === 'profile_effect') || null);
                       setPreviewNameplate(items.find((i) => i.category === 'nameplate') || null);
+                      setPreviewTheme(items.find((i) => i.category === 'profile_theme') || null);
                     }}
                     className="w-full py-1 text-[10px] font-semibold text-[#5865f2] hover:text-white rounded bg-[#5865f2]/10 hover:bg-[#5865f2]"
                   >
@@ -1013,28 +1305,36 @@ export default function AdminPWShopPage() {
       </div>
 
       {/* MODALS */}
-      <ProductModal
-        isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
-        onSave={handleSaveProduct}
-        initialItem={editingItem}
-        defaultCategory={productModalDefaultCategory}
-        onLivePreview={(item) => {
-          if (item.category === 'avatar_decoration') setPreviewDecoration(item as StoreItem);
-          if (item.category === 'profile_effect') setPreviewEffect(item as StoreItem);
-          if (item.category === 'nameplate') setPreviewNameplate(item as StoreItem);
-          triggerSyncNotification('Cosmético aplicado no Preview do Perfil ao lado!', 'info');
-        }}
-      />
+      {isProductModalOpen && (
+        <ProductModal
+          key={editingItem?.id || `new-${productModalDefaultCategory}`}
+          isOpen={isProductModalOpen}
+          onClose={() => setIsProductModalOpen(false)}
+          onSave={handleSaveProduct}
+          initialItem={editingItem}
+          defaultCategory={productModalDefaultCategory}
+          onLivePreview={(item) => {
+            if (item.category === 'avatar_decoration') setPreviewDecoration(item as StoreItem);
+            if (item.category === 'profile_effect') setPreviewEffect(item as StoreItem);
+            if (item.category === 'nameplate') setPreviewNameplate(item as StoreItem);
+            if (item.category === 'profile_theme') setPreviewTheme(item as StoreItem);
+            triggerSyncNotification('Cosmético aplicado no Preview do Perfil ao lado!', 'info');
+          }}
+        />
+      )}
 
-      <GrantItemModal
-        isOpen={isGrantModalOpen}
-        onClose={() => setIsGrantModalOpen(false)}
-        users={users}
-        items={items}
-        onGrantItem={handleGrantItemToUser}
-        onGrantCoins={handleGrantCoinsToUser}
-      />
+      {isGrantModalOpen && (
+        <GrantItemModal
+          key={grantTargetUserId || 'grant-default'}
+          isOpen={isGrantModalOpen}
+          onClose={() => setIsGrantModalOpen(false)}
+          users={users}
+          items={items}
+          defaultUserId={grantTargetUserId}
+          onGrantItem={handleGrantItemToUser}
+          onGrantCoins={handleGrantCoinsToUser}
+        />
+      )}
     </div>
   );
 }

@@ -9,8 +9,9 @@ interface GrantItemModalProps {
   onClose: () => void;
   users: PWUserProfile[];
   items: StoreItem[];
-  onGrantItem: (userId: string, itemId: string) => void;
-  onGrantCoins: (userId: string, amount: number) => void;
+  defaultUserId?: string;
+  onGrantItem: (userId: string, itemId: string) => Promise<void> | void;
+  onGrantCoins: (userId: string, amount: number) => Promise<void> | void;
 }
 
 export const GrantItemModal: React.FC<GrantItemModalProps> = ({
@@ -18,33 +19,48 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
   onClose,
   users,
   items,
+  defaultUserId,
   onGrantItem,
   onGrantCoins,
 }) => {
-  const [selectedUserId, setSelectedUserId] = useState<string>(users[0]?.id || '');
+  const [selectedUserId, setSelectedUserId] = useState<string>(defaultUserId || users[0]?.id || '');
   const [grantType, setGrantType] = useState<'item' | 'coins'>('item');
   const [selectedItemId, setSelectedItemId] = useState<string>(items[0]?.id || '');
   const [coinsAmount, setCoinsAmount] = useState<number>(500);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!isOpen) return null;
 
-  const handleGrant = (e: React.FormEvent) => {
+  const handleGrant = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUserId) return;
 
-    if (grantType === 'item') {
-      onGrantItem(selectedUserId, selectedItemId);
-      setSuccessMsg('Cosmético concedido ao usuário e sincronizado com o PW!');
-    } else {
-      onGrantCoins(selectedUserId, coinsAmount);
-      setSuccessMsg(`${coinsAmount} PW Coins adicionadas ao saldo do usuário!`);
-    }
+    setIsSubmitting(true);
+    setErrorMsg(null);
+    try {
+      if (grantType === 'item') {
+        if (!selectedItemId) {
+          setErrorMsg('Selecione um cosmético válido.');
+          return;
+        }
+        await onGrantItem(selectedUserId, selectedItemId);
+        setSuccessMsg('Cosmético concedido ao usuário e sincronizado com o PW!');
+      } else {
+        await onGrantCoins(selectedUserId, coinsAmount);
+        setSuccessMsg(`${coinsAmount} PW Coins adicionadas ao saldo do usuário!`);
+      }
 
-    setTimeout(() => {
-      setSuccessMsg(null);
-      onClose();
-    }, 1500);
+      setTimeout(() => {
+        setSuccessMsg(null);
+        onClose();
+      }, 1400);
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Falha ao entregar item/moedas.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,7 +73,7 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
             </span>
             <h2 className="text-base font-bold text-[#f2f3f5]">Conceder Item ou Moedas</h2>
           </div>
-          <button onClick={onClose} className="text-[#949ba4] hover:text-white">
+          <button type="button" onClick={onClose} className="text-[#949ba4] hover:text-white">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -65,11 +81,18 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
         <form onSubmit={handleGrant} className="p-6 space-y-4">
           {successMsg ? (
             <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 flex items-center gap-2 text-sm">
-              <Check className="w-5 h-5" />
+              <Check className="w-5 h-5 shrink-0" />
               <span>{successMsg}</span>
             </div>
           ) : (
             <>
+              {errorMsg && (
+                <div className="p-3 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 flex items-center gap-2 text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
               {/* Usuário Alvo */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#949ba4] mb-1.5">
@@ -150,7 +173,7 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
                     min="1"
                     step="50"
                     value={coinsAmount}
-                    onChange={(e) => setCoinsAmount(parseInt(e.target.value) || 0)}
+                    onChange={(e) => setCoinsAmount(parseInt(e.target.value, 10) || 0)}
                     className="w-full bg-[#1e1f22] border border-[#383a40] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#f0b232]"
                   />
                 </div>
@@ -173,9 +196,10 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-[#23a55a] hover:bg-[#1d8246] text-white font-semibold text-xs shadow-md"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 rounded-lg bg-[#23a55a] hover:bg-[#1d8246] disabled:opacity-50 text-white font-semibold text-xs shadow-md"
                 >
-                  Confirmar Entrega
+                  {isSubmitting ? 'Entregando...' : 'Confirmar Entrega'}
                 </button>
               </div>
             </>
@@ -185,4 +209,3 @@ export const GrantItemModal: React.FC<GrantItemModalProps> = ({
     </div>
   );
 };
-

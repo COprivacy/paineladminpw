@@ -10,6 +10,8 @@ export type ProductCategory =
 
 export type ProductRarity = 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 
+export type AnimationType = 'glow' | 'flame' | 'wave' | 'pulse';
+
 export interface StoreItem {
   id: string;
   title: string;
@@ -18,14 +20,14 @@ export interface StoreItem {
   rarity: ProductRarity;
   priceBRL: number; // Ex: 19.90
   priceCoins: number; // Ex: 450
-  assetUrl: string; // URL do APNG/GIF/WebP ou MP4/WebM
+  assetUrl: string; // URL do APNG/GIF/WebP ou MP4/WebM (ou gradiente CSS para nameplate)
   previewUrl: string; // Thumbnail para o card da loja
   badgeIconUrl?: string; // Se for badge
   config?: {
     bannerColor?: string;
     accentColor?: string;
     gradientColors?: [string, string];
-    animationType?: 'glow' | 'flame' | 'pulse' | 'wave' | 'matrix';
+    animationType?: AnimationType;
     tag?: string;
     nitroExclusive?: boolean;
     serverBoostPerk?: boolean;
@@ -69,6 +71,7 @@ export interface PWUserProfile {
   activeDecoration?: StoreItem | null;
   activeEffect?: StoreItem | null;
   activeNameplate?: StoreItem | null;
+  activeTheme?: StoreItem | null;
   badges: string[]; // URLs or IDs
   inventoryItemIds: string[];
 }
@@ -91,6 +94,6 @@ export interface SyncPayload {
   action: 'ITEM_CREATED' | 'ITEM_UPDATED' | 'ITEM_DELETED' | 'INVENTORY_GRANTED' | 'INVENTORY_REVOKED';
   timestamp: string;
   targetId: string;
-  data: any;
-  secret: string;
+  data: unknown;
+  secret?: string;
 }

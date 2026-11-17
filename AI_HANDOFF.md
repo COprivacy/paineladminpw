@@ -21,12 +21,14 @@ Este repositorio (`paineladminpw`) e o **Painel Administrativo da Loja Oficial d
 ## 2. O que JA FOI FEITO (Estado Atual)
 
 ### 2.1 Stack & Infraestrutura Base
+
 - **Next.js 16 (App Router)** com **React 19**, **TypeScript** e **Tailwind CSS**.
 - Build de producao verificado com **0 erros** de compilacao ou de tipos TypeScript.
 - Servidor de desenvolvimento rodando em segundo plano em `http://localhost:3000`.
 - Icones profissionais da biblioteca **Lucide Icons** (zero emojis, zero icones de estrelas/IA).
 
 ### 2.2 Banco de Dados Supabase (PostgreSQL & Storage)
+
 - **Script DDL Criado em `supabase/schema.sql`:**
   - `public.store_items`: Armazena todos os cosméticos (molduras, efeitos, insígnias, nameplates, pacotes de moedas, bundles), raridades (`common`, `rare`, `epic`, `legendary`, `mythic`), preços em R$ e em moedas do PW (`price_coins`), URLs de assets e JSONB de configurações visuais.
   - `public.subscription_plans`: Planos estilo Discord Nitro (`nitro_basic`, `nitro_booster`, `nitro_ultimate`), bônus mensal de moedas e lista de benefícios (perks).
@@ -40,6 +42,7 @@ Este repositorio (`paineladminpw`) e o **Painel Administrativo da Loja Oficial d
   - Coleção Cyberpunk, Moldura Katana Neon, Fogo Infernal, Sakuras Místicas, Tempestade de Raios, Nameplate Ouro 24k, Badges de Apoiador Alfa, etc.
 
 ### 2.3 Interface do Usuário (Discord Dark Theme & Ícones Profissionais)
+
 - **`src/app/globals.css`:** Variáveis de cores autênticas do Discord (`#313338`, `#2b2d31`, `#1e1f22`, `#5865F2`, `#F47FFF`, `#23A55A`, `#F0B232`), scrollbars customizadas e animações CSS (`animate-flame`, `animate-glow`, `animate-sakura`, `animate-lightning`).
 - **`src/components/preview/DiscordProfileCard.tsx`:** Componente pixel-perfect do perfil do Discord. Renderiza ao vivo o avatar, a moldura animada, o banner com o efeito de perfil ativado, nameplate com gradiente de texto, insígnias profissionais (`Gem`, `Zap`, `ShieldCheck`), bio e cargos.
 - **`src/components/layout/DiscordSidebar.tsx`:** Trilho lateral esquerdo do servidor PW + lista de canais de navegação e barra de usuário inferior.
@@ -47,6 +50,7 @@ Este repositorio (`paineladminpw`) e o **Painel Administrativo da Loja Oficial d
 - **`src/components/users/GrantItemModal.tsx`:** Modal para o administrador conceder itens ou moedas diretamente no inventário de qualquer usuário do PW.
 
 ### 2.4 Integração & Sincronização
+
 - **`src/lib/supabase.ts`:** Cliente Supabase resiliente. Funciona com as credenciais reais do `.env.local` e faz fallback transparente para mock data caso as chaves ainda não tenham sido inseridas pelo usuário.
 - **`src/lib/firebase-sync.ts` & `src/app/api/sync-pw/route.ts`:** Sistema de Webhook que envia requisições `POST` com token Bearer (`PW_SYNC_SECRET`) para o backend Firebase do PW notificar clientes via WebSocket.
 - **`src/lib/mock-data.ts`:** Catálogo de teste rico para desenvolvimento imediato sem qualquer caractere emoji.
@@ -67,20 +71,23 @@ paineladminpw/
 │   └── seed.sql                     # SQL com itens iniciais da loja estilo Discord
 └── src/
     ├── app/
-    │   ├── api/sync-pw/route.ts     # Endpoint de teste de ping e disparo de sincronização
+    │   ├── api/
+    │   │   ├── products/route.ts    # CRUD completo de produtos (Supabase + fallback + sync)
+    │   │   ├── sync-pw/route.ts     # Endpoint de teste de ping e disparo de sincronização
+    │   │   └── users/grant/route.ts # Entrega de cosméticos/moedas no inventário + webhook
     │   ├── globals.css              # Tema Discord Dark e animações de cosméticos
     │   ├── layout.tsx               # Metadados e wrapper HTML
     │   └── page.tsx                 # Página principal com todas as abas e Live Preview
     ├── components/
     │   ├── common/RarityBadge.tsx   # Badge visual de raridade (Comum, Raro, Épico, Lendário, Mítico)
     │   ├── layout/DiscordSidebar.tsx # Sidebar estilo Discord (Canais e Servidor)
-    │   ├── preview/DiscordProfileCard.tsx # Preview ao vivo do perfil com cosméticos
-    │   ├── products/ProductModal.tsx # Modal de criação/edição de produtos
+    │   ├── preview/DiscordProfileCard.tsx # Preview ao vivo do perfil com cosméticos e temas
+    │   ├── products/ProductModal.tsx # Modal de criação/edição de produtos (com thumbnail e expiração)
     │   └── users/GrantItemModal.tsx # Modal para conceder cosméticos ou coins a usuários
     ├── lib/
     │   ├── firebase-sync.ts         # Despachante de webhook para o Firebase do PW
     │   ├── mock-data.ts             # Dados mock para demonstração offline
-    │   └── supabase.ts              # Conexão oficial com o Supabase
+    │   └── supabase.ts              # Conexão Supabase + mappers snake_case <-> camelCase
     └── types/
         └── store.ts                 # Interfaces TypeScript de todos os produtos e payloads
 ```
@@ -92,6 +99,7 @@ paineladminpw/
 Se o usuário pedir continuidade, aqui está a lista de tarefas prioritárias:
 
 ### Prioridade 1: Executar o Banco no Supabase do Usuário
+
 - O usuário precisa ir até o painel do Supabase ([supabase.com/dashboard](https://supabase.com/dashboard)), abrir o **SQL Editor** e rodar:
   1. `supabase/schema.sql` (Criação de tabelas, índices e RLS).
   2. `supabase/seed.sql` (Popula a loja com itens iniciais).
@@ -103,14 +111,23 @@ Se o usuário pedir continuidade, aqui está a lista de tarefas prioritárias:
   ```
 
 ### Prioridade 2: Upload Direto de Arquivos para o Supabase Storage
+
 - Atualmente, o `ProductModal.tsx` recebe a URL da imagem/animação via input de texto.
 - Adicionar upload direto drag-and-drop para o bucket `pw-shop-assets` via `supabase.storage.from('pw-shop-assets').upload(...)`.
 
 ### Prioridade 3: Configurar o Receptor no Firebase do PW
+
 - No backend do PW (no Firebase), criar uma Cloud Function HTTP para escutar o webhook `POST /onShopSync` e emitir evento via WebSocket / Firebase Realtime DB para os clientes conectados.
 
 ### Prioridade 4: Autenticação de Administrador (Login Gate)
+
 - Criar tela de login (`/login`) usando **Supabase Auth** (`supabase.auth.signInWithPassword`), protegendo o acesso ao painel.
 
-### Prioridade 5: Integração com Gateway de Pagamento Real (Opcional)
+### Prioridade 5: Rotas de Leitura/Edição para Usuários, Planos Nitro e Pedidos
+
+- Produtos (`GET/POST/PUT/DELETE /api/products`) e concessão de itens (`POST /api/users/grant`) já possuem persistência no Supabase.
+- Implementar rotas equivalentes (`/api/users`, `/api/subscriptions`, `/api/orders`) para carregar a lista real de usuários, editar planos Nitro persistindo em `subscription_plans` e listar pedidos de `store_orders`.
+
+### Prioridade 6: Integração com Gateway de Pagamento Real (Opcional)
+
 - Integrar Mercado Pago (Pix automático com QR Code) ou Stripe para checkout de PW Coins e Nitro.

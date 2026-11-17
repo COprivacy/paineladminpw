@@ -5,11 +5,12 @@ import { supabase, isSupabaseConfigured, getAdminSupabase } from '@/lib/supabase
 export async function GET() {
   const supabaseReady = isSupabaseConfigured();
   let supabaseCount = 0;
-  let supabaseError = null;
+  let supabaseError: string | null = null;
 
-  if (supabaseReady && supabase) {
+  const client = getAdminSupabase() || supabase;
+  if (supabaseReady && client) {
     try {
-      const { count, error } = await supabase
+      const { count, error } = await client
         .from('store_items')
         .select('*', { count: 'exact', head: true });
       if (error) {
@@ -17,8 +18,8 @@ export async function GET() {
       } else {
         supabaseCount = count || 0;
       }
-    } catch (e: any) {
-      supabaseError = e.message;
+    } catch (e: unknown) {
+      supabaseError = e instanceof Error ? e.message : 'Erro ao consultar Supabase';
     }
   }
 
@@ -51,12 +52,12 @@ export async function POST(req: Request) {
       data || { message: 'Teste de sincronização Painel Admin -> PW' }
     );
 
-    return NextResponse.json(result);
-  } catch (error: any) {
+    return NextResponse.json(result, { status: result.success ? 200 : 502 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erro ao processar requisição';
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message },
       { status: 500 }
     );
   }
 }
-

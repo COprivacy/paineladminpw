@@ -37,6 +37,7 @@ interface DiscordSidebarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   itemsCount: {
+    total: number;
     decorations: number;
     effects: number;
     badges: number;
@@ -167,7 +168,7 @@ export const DiscordSidebar: React.FC<DiscordSidebarProps> = ({
                     <span>loja-geral</span>
                   </div>
                   <span className="text-[10px] bg-[#1e1f22] px-1.5 py-0.5 rounded text-[#949ba4]">
-                    {itemsCount.decorations + itemsCount.effects + itemsCount.badges}
+                    {itemsCount.total}
                   </span>
                 </button>
 

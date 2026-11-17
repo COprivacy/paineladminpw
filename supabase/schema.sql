@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.store_items (
 
 -- 3. TABELA DE PLANOS DE ASSINATURA (ESTILO NITRO)
 CREATE TABLE IF NOT EXISTS public.subscription_plans (
-    id VARCHAR(50) PRIMARY KEY, -- ex: 'nitro_basic', 'nitro_boost', 'nitro_ultimate'
+    id VARCHAR(50) PRIMARY KEY, -- ex: 'nitro_basic', 'nitro_booster', 'nitro_ultimate'
     name VARCHAR(100) NOT NULL,
     badge_name VARCHAR(100),
     badge_icon TEXT,
@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS public.user_profiles (
     avatar_url TEXT DEFAULT 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
     banner_url TEXT,
     bio TEXT DEFAULT 'Olá! Estou usando o PW.',
+    custom_status TEXT,
     status VARCHAR(20) DEFAULT 'online' CHECK (status IN ('online', 'idle', 'dnd', 'offline')),
     coins_balance INTEGER NOT NULL DEFAULT 0,
     subscription_tier VARCHAR(50) REFERENCES public.subscription_plans(id) ON DELETE SET NULL,
@@ -159,6 +160,9 @@ CREATE POLICY "Service Role acesso total user_inventory" ON public.user_inventor
 CREATE POLICY "Service Role acesso total store_orders" ON public.store_orders
     FOR ALL USING (auth.role() = 'service_role');
 
+CREATE POLICY "Service Role acesso total store_banners" ON public.store_banners
+    FOR ALL USING (auth.role() = 'service_role');
+
 -- 10. CRIAÇÃO DE BUCKET DE ARMAZENAMENTO NO SUPABASE STORAGE (Para imagens e animações)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('pw-shop-assets', 'pw-shop-assets', true)
@@ -168,5 +172,5 @@ CREATE POLICY "Assets da loja são públicos" ON storage.objects
     FOR SELECT USING (bucket_id = 'pw-shop-assets');
 
 CREATE POLICY "Apenas admins podem fazer upload de assets" ON storage.objects
-    FOR INSERT WITH CHECK (bucket_id = 'pw-shop-assets' AND (auth.role() = 'service_role' OR auth.role() = 'authenticated'));
+    FOR INSERT WITH CHECK (bucket_id = 'pw-shop-assets' AND auth.role() = 'service_role');
 
