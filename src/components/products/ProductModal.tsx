@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { StoreItem, ProductCategory, ProductRarity } from '@/types/store';
-import { X, Save, Sparkles, Upload, Eye } from 'lucide-react';
+import { X, Save, SlidersHorizontal, Eye, Coins } from 'lucide-react';
 import { RarityBadge } from '../common/RarityBadge';
 
 interface ProductModalProps {
@@ -35,7 +35,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
   const [featured, setFeatured] = useState(false);
 
   // Specific configs
-  const [animationType, setAnimationType] = useState<'glow' | 'flame' | 'sakura' | 'pulse' | 'sparkle'>('glow');
+  const [animationType, setAnimationType] = useState<'glow' | 'flame' | 'wave' | 'pulse' | 'matrix'>('glow');
   const [gradientColor1, setGradientColor1] = useState('#5865F2');
   const [gradientColor2, setGradientColor2] = useState('#F47FFF');
   const [coinsAmount, setCoinsAmount] = useState(1000);
@@ -143,7 +143,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <div className="px-6 py-4 bg-[#232428] border-b border-[#1f2023] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="p-2 rounded-lg bg-[#5865f2]/20 text-[#5865f2]">
-              <Sparkles className="w-5 h-5" />
+              <SlidersHorizontal className="w-5 h-5" />
             </span>
             <div>
               <h2 className="text-lg font-bold text-[#f2f3f5]">
@@ -175,13 +175,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 onChange={(e) => setCategory(e.target.value as ProductCategory)}
                 className="w-full bg-[#1e1f22] border border-[#383a40] rounded-lg px-3 py-2 text-sm text-[#dbdee1] focus:outline-none focus:border-[#5865f2]"
               >
-                <option value="avatar_decoration">🎭 Moldura de Avatar (Avatar Decoration)</option>
-                <option value="profile_effect">✨ Efeito de Perfil (Profile Effect)</option>
-                <option value="badge">🏷️ Insígnia de Perfil (Badge)</option>
-                <option value="nameplate">🎨 Nome com Gradiente (Nameplate)</option>
-                <option value="profile_theme">🖼️ Tema de Perfil (Banner/Cor)</option>
-                <option value="coin_pack">🪙 Pacote de Moedas PW</option>
-                <option value="bundle">🎁 Bundle / Pacote Promocional</option>
+                <option value="avatar_decoration">Moldura de Avatar (Avatar Decoration)</option>
+                <option value="profile_effect">Efeito de Perfil (Profile Effect)</option>
+                <option value="badge">Insígnia de Perfil (Badge)</option>
+                <option value="nameplate">Estilo de Nome (Nameplate)</option>
+                <option value="profile_theme">Tema de Perfil (Banner e Cores)</option>
+                <option value="coin_pack">Pacote de Moedas PW</option>
+                <option value="bundle">Pacote Promocional (Bundle)</option>
               </select>
             </div>
 
@@ -258,7 +258,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                 Preço em Moedas do PW (Coins)
               </label>
               <div className="relative">
-                <span className="absolute left-3 top-2 text-sm text-[#f0b232]">🪙</span>
+                <Coins className="w-4 h-4 text-[#f0b232] absolute left-3 top-2.5" />
                 <input
                   type="number"
                   step="10"
@@ -306,9 +306,8 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                     >
                       <option value="glow">Brilho Neon (Glow)</option>
                       <option value="flame">Chamas Ardentes (Flame)</option>
-                      <option value="sakura">Pétalas Flutuantes (Sakura)</option>
-                      <option value="pulse">Relâmpagos / Pulso (Lightning)</option>
-                      <option value="sparkle">Partículas Estelares (Sparkle)</option>
+                      <option value="wave">Efeito Ondulante (Wave)</option>
+                      <option value="pulse">Pulso Elétrico (Lightning)</option>
                     </select>
                   </div>
 

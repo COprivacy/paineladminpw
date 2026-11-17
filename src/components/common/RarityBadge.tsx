@@ -48,3 +48,4 @@ export const RarityBadge: React.FC<RarityBadgeProps> = ({ rarity, className = ''
     </span>
   );
 };
+

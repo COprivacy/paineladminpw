@@ -25,7 +25,7 @@ export interface StoreItem {
     bannerColor?: string;
     accentColor?: string;
     gradientColors?: [string, string];
-    animationType?: 'sparkle' | 'flame' | 'pulse' | 'glow' | 'matrix' | 'sakura';
+    animationType?: 'glow' | 'flame' | 'pulse' | 'wave' | 'matrix';
     tag?: string;
     nitroExclusive?: boolean;
     serverBoostPerk?: boolean;
@@ -65,7 +65,7 @@ export interface PWUserProfile {
   customStatus?: string;
   status: 'online' | 'idle' | 'dnd' | 'offline';
   coinsBalance: number;
-  subscriptionTier?: string; // 'none' | 'nitro_basic' | 'nitro_boost'
+  subscriptionTier?: string; // 'none' | 'nitro_basic' | 'nitro_booster' | 'nitro_ultimate'
   activeDecoration?: StoreItem | null;
   activeEffect?: StoreItem | null;
   activeNameplate?: StoreItem | null;

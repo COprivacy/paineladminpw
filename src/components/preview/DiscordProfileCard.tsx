@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { StoreItem, PWUserProfile } from '@/types/store';
-import { Sparkles, Zap, ShieldCheck, Heart, Circle } from 'lucide-react';
+import { Zap, ShieldCheck, Circle, Layers, Gem, Coins, Shield } from 'lucide-react';
 
 interface DiscordProfileCardProps {
   user?: PWUserProfile;
@@ -15,12 +15,12 @@ interface DiscordProfileCardProps {
 export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
   user = {
     id: 'usr-demo',
-    username: 'Capitão_PW',
+    username: 'Capitao_PW',
     discriminator: '2026',
     avatarUrl: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=300',
     bannerUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800',
-    bio: 'Administrador do PW • Criador de conteúdo & entusiasta do metaverso Discord.',
-    customStatus: '🚀 Testando novos cosméticos no painel',
+    bio: 'Administrador do PW - Gestão de comunidade e infraestrutura da plataforma.',
+    customStatus: 'Configurando novos cosméticos no painel',
     status: 'online',
     coinsBalance: 3500,
     subscriptionTier: 'nitro_booster',
@@ -42,7 +42,7 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
     const animType = activeDec.config?.animationType;
     if (animType === 'flame') return 'animate-flame';
     if (animType === 'glow') return 'animate-glow';
-    if (animType === 'sakura') return 'animate-sakura';
+    if (animType === 'wave') return 'animate-sakura';
     return 'animate-glow';
   };
 
@@ -83,16 +83,16 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
             {activeEff.config?.animationType === 'pulse' && (
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-600/30 to-pink-500/20 animate-lightning" />
             )}
-            {activeEff.config?.animationType === 'sakura' && (
+            {activeEff.config?.animationType === 'wave' && (
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-500/30 via-rose-900/10 to-transparent animate-sakura" />
             )}
-            {activeEff.config?.animationType === 'sparkle' && (
+            {(!activeEff.config?.animationType || activeEff.config?.animationType === 'glow') && (
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/30 via-fuchsia-500/20 to-purple-800/40 animate-pulse" />
             )}
 
             {/* Effect Badge Indicator */}
-            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] text-purple-300 border border-purple-500/30 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-purple-400 animate-spin" style={{ animationDuration: '6s' }} />
+            <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] text-purple-300 border border-purple-500/30 flex items-center gap-1.5">
+              <Layers className="w-3 h-3 text-purple-400" />
               <span>{activeEff.title}</span>
             </div>
           </div>
@@ -133,10 +133,6 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
                     backgroundImage: `linear-gradient(45deg, ${activeDec.config?.gradientColors?.[0] || '#5865F2'}33, ${activeDec.config?.gradientColors?.[1] || '#F47FFF'}44)`,
                   }}
                 />
-                {/* Decoration Icon Floating Header */}
-                <div className="absolute -top-1 bg-[#1e1f22] border border-[#5865F2] rounded-full p-1 text-[8px] text-[#f47fff]">
-                  ✨
-                </div>
               </div>
             )}
 
@@ -170,11 +166,17 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
               <span className="text-xs text-[#949ba4] font-medium ml-1">#{user.discriminator}</span>
             </div>
 
-            {/* Badges Bar */}
-            <div className="flex items-center gap-1 bg-[#1e1f22] px-2 py-1 rounded-lg border border-[#2b2d31]">
-              <span title="Apoiador PW" className="text-sm">💎</span>
-              <span title="Assinante Nitro" className="text-sm">🚀</span>
-              <span title="Desenvolvedor" className="text-sm">🛡️</span>
+            {/* Badges Bar with Professional Icons */}
+            <div className="flex items-center gap-1.5 bg-[#1e1f22] px-2.5 py-1 rounded-lg border border-[#2b2d31]">
+              <span title="Apoiador Alfa" className="text-cyan-400">
+                <Gem className="w-3.5 h-3.5" />
+              </span>
+              <span title="Assinante Nitro" className="text-fuchsia-400">
+                <Zap className="w-3.5 h-3.5" />
+              </span>
+              <span title="Staff / Verificado" className="text-emerald-400">
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </span>
             </div>
           </div>
 
@@ -196,7 +198,8 @@ export const DiscordProfileCard: React.FC<DiscordProfileCardProps> = ({
           <div className="mt-3 pt-2 border-t border-[#2b2d31] flex justify-between items-center text-[11px] text-[#949ba4]">
             <span>Saldo PW Coins:</span>
             <span className="font-bold text-[#f0b232] flex items-center gap-1">
-              🪙 {user.coinsBalance.toLocaleString('pt-BR')} Coins
+              <Coins className="w-3.5 h-3.5 text-[#f0b232]" />
+              {user.coinsBalance.toLocaleString('pt-BR')} Coins
             </span>
           </div>
         </div>

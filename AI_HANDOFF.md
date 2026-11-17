@@ -1,29 +1,30 @@
-# 🤖 GUIA DE TRANSIÇÃO PARA A PRÓXIMA IA / DESENVOLVEDOR (AI HANDOFF)
+# GUIA DE TRANSICAO PARA A PROXIMA IA / DESENVOLVEDOR (AI HANDOFF)
 
 > **Documento de Contexto Geral do Projeto: `paineladminpw`**  
-> **Repositório Oficial:** `https://github.com/COprivacy/paineladminpw.git`  
+> **Repositorio Oficial:** `https://github.com/COprivacy/paineladminpw.git`  
 > **Caminho Local do Workspace:** `C:\Users\carla\.gemini\antigravity\scratch\paineladminpw`  
-> **Última Atualização:** 17 de Novembro de 2026
+> **Ultima Atualizacao:** 17 de Novembro de 2026
 
 ---
 
-## 🎯 1. O que é este projeto? (Visão Geral)
+## 1. O que e este projeto? (Visao Geral)
 
-O **PW** é uma aplicação de comunicação por voz, texto e vídeo similar ao **Discord**.  
-Este repositório (`paineladminpw`) é o **Painel Administrativo da Loja Oficial do PW**, criado de forma desacoplada do projeto principal, porém integrado via banco de dados e mensageria:
+O **PW** e uma aplicacao de comunicacao por voz, texto e video similar ao **Discord**.  
+Este repositorio (`paineladminpw`) e o **Painel Administrativo da Loja Oficial do PW**, criado de forma desacoplada do projeto principal, porem integrado via banco de dados e mensageria:
 
-- **Banco de Dados & Storage:** Hospedado no **Supabase** (PostgreSQL + Buckets de armazenamento de imagens/animações).
+- **Banco de Dados & Storage:** Hospedado no **Supabase** (PostgreSQL + Buckets de armazenamento de imagens/animacoes).
 - **Servidor do Aplicativo PW:** Hospedado no **Firebase** (Cloud Functions, Realtime DB / Firestore).
-- **Tema Visual:** **Discord Dark Theme autêntico**, com sidebar em formato de servidores, canais (`# loja-catalogo`, `# molduras-avatar`), e um **card de perfil ao vivo (Live Discord Profile Card)** para testar cosméticos em tempo real.
+- **Tema Visual:** **Discord Dark Theme autêntico**, com sidebar em formato de servidores, canais (`# loja-catalogo`, `# molduras-avatar`), e um **card de perfil ao vivo (Live Discord Profile Card)** para testar cosmeticos em tempo real sem qualquer emoji ou icone de IA.
 
 ---
 
-## ✅ 2. O que JÁ FOI FEITO (Estado Atual)
+## 2. O que JA FOI FEITO (Estado Atual)
 
 ### 2.1 Stack & Infraestrutura Base
 - **Next.js 16 (App Router)** com **React 19**, **TypeScript** e **Tailwind CSS**.
-- Build de produção verificado com **0 erros** de compilação ou de tipos TypeScript.
-- Repositório Git local clonado, commitado e **já sincronizado (pushed) com a branch `main` no GitHub**.
+- Build de producao verificado com **0 erros** de compilacao ou de tipos TypeScript.
+- Servidor de desenvolvimento rodando em segundo plano em `http://localhost:3000`.
+- Icones profissionais da biblioteca **Lucide Icons** (zero emojis, zero icones de estrelas/IA).
 
 ### 2.2 Banco de Dados Supabase (PostgreSQL & Storage)
 - **Script DDL Criado em `supabase/schema.sql`:**
@@ -38,21 +39,21 @@ Este repositório (`paineladminpw`) é o **Painel Administrativo da Loja Oficial
 - **Script Seed Criado em `supabase/seed.sql`:**
   - Coleção Cyberpunk, Moldura Katana Neon, Fogo Infernal, Sakuras Místicas, Tempestade de Raios, Nameplate Ouro 24k, Badges de Apoiador Alfa, etc.
 
-### 2.3 Interface do Usuário (Discord Dark Theme)
+### 2.3 Interface do Usuário (Discord Dark Theme & Ícones Profissionais)
 - **`src/app/globals.css`:** Variáveis de cores autênticas do Discord (`#313338`, `#2b2d31`, `#1e1f22`, `#5865F2`, `#F47FFF`, `#23A55A`, `#F0B232`), scrollbars customizadas e animações CSS (`animate-flame`, `animate-glow`, `animate-sakura`, `animate-lightning`).
-- **`src/components/preview/DiscordProfileCard.tsx`:** Componente pixel-perfect do perfil do Discord. Renderiza ao vivo o avatar, a moldura animada (com glow/flame/pulse), o banner com o efeito de perfil ativado, nameplate com gradiente de texto, insígnias e cargos.
+- **`src/components/preview/DiscordProfileCard.tsx`:** Componente pixel-perfect do perfil do Discord. Renderiza ao vivo o avatar, a moldura animada, o banner com o efeito de perfil ativado, nameplate com gradiente de texto, insígnias profissionais (`Gem`, `Zap`, `ShieldCheck`), bio e cargos.
 - **`src/components/layout/DiscordSidebar.tsx`:** Trilho lateral esquerdo do servidor PW + lista de canais de navegação e barra de usuário inferior.
-- **`src/components/products/ProductModal.tsx`:** Modal completo para criar e editar qualquer tipo de produto (preços em R$ e PW Coins, raridade, tipo de animação, cores primárias/secundárias e botão de teste direto no preview).
+- **`src/components/products/ProductModal.tsx`:** Modal completo para criar e editar qualquer tipo de produto (preços em R$ e PW Coins com ícone `Coins`, raridade, tipo de animação, cores primárias/secundárias e botão de teste direto no preview).
 - **`src/components/users/GrantItemModal.tsx`:** Modal para o administrador conceder itens ou moedas diretamente no inventário de qualquer usuário do PW.
 
 ### 2.4 Integração & Sincronização
 - **`src/lib/supabase.ts`:** Cliente Supabase resiliente. Funciona com as credenciais reais do `.env.local` e faz fallback transparente para mock data caso as chaves ainda não tenham sido inseridas pelo usuário.
 - **`src/lib/firebase-sync.ts` & `src/app/api/sync-pw/route.ts`:** Sistema de Webhook que envia requisições `POST` com token Bearer (`PW_SYNC_SECRET`) para o backend Firebase do PW notificar clientes via WebSocket.
-- **`src/lib/mock-data.ts`:** Catálogo de teste rico para desenvolvimento imediato.
+- **`src/lib/mock-data.ts`:** Catálogo de teste rico para desenvolvimento imediato sem qualquer caractere emoji.
 
 ---
 
-## 📌 3. Estrutura de Arquivos do Projeto
+## 3. Estrutura de Arquivos do Projeto
 
 ```
 paineladminpw/
@@ -86,7 +87,7 @@ paineladminpw/
 
 ---
 
-## 📋 4. O QUE AINDA PRECISA SER FEITO (Roadmap / Próximos Passos)
+## 4. O QUE AINDA PRECISA SER FEITO (Roadmap / Próximos Passos)
 
 Se o usuário pedir continuidade, aqui está a lista de tarefas prioritárias:
 
@@ -103,34 +104,13 @@ Se o usuário pedir continuidade, aqui está a lista de tarefas prioritárias:
 
 ### Prioridade 2: Upload Direto de Arquivos para o Supabase Storage
 - Atualmente, o `ProductModal.tsx` recebe a URL da imagem/animação via input de texto.
-- **Melhoria recomendada:** Adicionar um campo de `<input type="file" />` ou drag-and-drop no modal que faz upload direto para o bucket `pw-shop-assets` via `supabase.storage.from('pw-shop-assets').upload(...)` e já preenche o link do asset automaticamente.
+- Adicionar upload direto drag-and-drop para o bucket `pw-shop-assets` via `supabase.storage.from('pw-shop-assets').upload(...)`.
 
 ### Prioridade 3: Configurar o Receptor no Firebase do PW
-- No backend do PW (que está no Firebase), criar uma Cloud Function HTTP para escutar o webhook:
-  ```typescript
-  // Exemplo de Cloud Function no Firebase do PW:
-  export const onShopSync = functions.https.onRequest(async (req, res) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader !== `Bearer ${process.env.PW_SYNC_SECRET}`) {
-      return res.status(401).send('Unauthorized');
-    }
-    const { action, targetId, data } = req.body;
-    // Disparar atualização via Firebase Realtime DB / WebSocket para os clientes do PW
-    await admin.database().ref('system/store_version').set(Date.now());
-    return res.json({ success: true });
-  });
-  ```
+- No backend do PW (no Firebase), criar uma Cloud Function HTTP para escutar o webhook `POST /onShopSync` e emitir evento via WebSocket / Firebase Realtime DB para os clientes conectados.
 
 ### Prioridade 4: Autenticação de Administrador (Login Gate)
-- O painel atualmente abre diretamente. Para colocá-lo em produção na Vercel ou Firebase Hosting, criar uma tela simples de login (`/login`) usando **Supabase Auth** (`supabase.auth.signInWithPassword`), permitindo que apenas emails autorizados acessem a gestão.
+- Criar tela de login (`/login`) usando **Supabase Auth** (`supabase.auth.signInWithPassword`), protegendo o acesso ao painel.
 
 ### Prioridade 5: Integração com Gateway de Pagamento Real (Opcional)
-- Integrar Mercado Pago (Pix automático com QR Code) ou Stripe para quando os usuários comprarem PW Coins ou assinaturas Nitro diretamente pelo aplicativo ou checkout web.
-
----
-
-## 💡 5. Dicas Importantes para a Próxima IA
-1. **Preservação de Estilo:** Mantenha sempre o tema escuro Discord (`#313338`, `#2b2d31`, `#1e1f22`). Não substitua por componentes claros genéricos.
-2. **Compatibilidade Next.js 16:** O projeto usa Next.js 16 com Turbopack e React 19. Sempre utilize componentes `'use client'` quando usar hooks (`useState`, `useEffect`).
-3. **Resiliência do Supabase:** Não quebre o fallback para `mock-data.ts`. O painel deve continuar abrindo mesmo se o usuário ainda não tiver configurado o `.env.local`.
-4. **Git:** Para commitar no repositório local, lembre-se de configurar `git config user.name` e `git config user.email` se o ambiente não tiver global.
+- Integrar Mercado Pago (Pix automático com QR Code) ou Stripe para checkout de PW Coins e Nitro.

@@ -169,3 +169,4 @@ CREATE POLICY "Assets da loja são públicos" ON storage.objects
 
 CREATE POLICY "Apenas admins podem fazer upload de assets" ON storage.objects
     FOR INSERT WITH CHECK (bucket_id = 'pw-shop-assets' AND (auth.role() = 'service_role' OR auth.role() = 'authenticated'));
+

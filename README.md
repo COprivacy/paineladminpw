@@ -1,10 +1,10 @@
-# PW Loja & Painel Administrativo (Discord Style) 🛍️✨
+# PW Loja & Painel Administrativo (Discord Style)
 
 Painel administrativo independente e moderno, desenvolvido especialmente para gerenciar a **Loja Oficial do PW** (plataforma similar ao Discord), com suporte a cosméticos de perfil, assinaturas estilo Nitro, pacotes de moedas e controle de inventário de usuários.
 
 ---
 
-## 🚀 Tecnologias & Arquitetura
+## Tecnologias & Arquitetura
 
 - **Frontend / Backoffice:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS.
 - **Tema:** Discord Dark Theme autêntico (`#313338`, `#2b2d31`, `#1e1f22`, Discord Blurple `#5865F2`).
@@ -20,30 +20,30 @@ flowchart LR
 
 ---
 
-## 🎨 Tipos de Produtos Completos
+## Tipos de Produtos Completos
 
-1. **🎭 Molduras de Avatar (Avatar Decorations):**
+1. **Molduras de Avatar (Avatar Decorations):**
    - Suporte a animações em WebP, APNG, Lottie ou GIFs.
-   - Efeitos visuais dinâmicos (Chamas, Brilho Neon, Sakuras, Relâmpagos).
+   - Efeitos visuais dinâmicos (Chamas, Brilho Neon, Ondulações, Relâmpagos).
    - Teste ao vivo em tempo real sobre o avatar do perfil.
-2. **✨ Efeitos de Perfil (Profile Effects):**
+2. **Efeitos de Perfil (Profile Effects):**
    - Efeitos visuais animados que são exibidos quando o perfil é inspecionado.
    - Banners temáticos com sobreposições luminosas.
-3. **🏷️ Insígnias de Perfil (Badges):**
+3. **Insígnias de Perfil (Badges):**
    - Conquistas, apoiadores alfa, moderadores, desenvolvedores e selos de eventos.
-4. **🎨 Nameplates / Estilos de Nome:**
-   - Gradientes de cor no nome do usuário (RGB, Holográfico, Ouro 24K, Cyberpunk).
-5. **👑 Planos de Assinatura (Estilo Discord Nitro):**
+4. **Nameplates / Estilos de Nome:**
+   - Gradientes de cor no nome do usuário (Holográfico, Ouro 24K, Cyberpunk).
+5. **Planos de Assinatura (Estilo Discord Nitro):**
    - *PW Nitro Basic*, *PW Nitro Booster*, *PW Nitro Ultimate*.
    - Configuração de limites de upload, boosts de servidor, bônus mensal de moedas e descontos na loja.
-6. **🪙 Pacotes de Moedas Virtuais (PW Coins):**
+6. **Pacotes de Moedas Virtuais (PW Coins):**
    - Pacotes de moedas virtuais com bônus percentuais para compras na loja.
-7. **🎁 Bundles / Coleções Promocionais:**
+7. **Bundles / Coleções Promocionais:**
    - Pacotes combinando múltiplos cosméticos com desconto.
 
 ---
 
-## 📦 Como Rodar o Projeto Localmente
+## Como Rodar o Projeto Localmente
 
 1. **Instalar as dependências:**
    ```bash
@@ -74,7 +74,7 @@ flowchart LR
 
 ---
 
-## 🗄️ Configuração do Banco de Dados no Supabase
+## Configuração do Banco de Dados no Supabase
 
 1. Acesse o painel do seu projeto no **Supabase** ([supabase.com/dashboard](https://supabase.com/dashboard)).
 2. Vá até o menu lateral esquerdo em **SQL Editor**.
@@ -83,7 +83,7 @@ flowchart LR
 
 ---
 
-## ⚡ Conexão com o Servidor Firebase do PW
+## Conexão com o Servidor Firebase do PW
 
 Quando um produto é criado, editado ou concedido a um usuário no Painel Admin, um webhook HTTP `POST` é disparado automaticamente para o `FIREBASE_PW_WEBHOOK_URL` com o seguinte payload:
 

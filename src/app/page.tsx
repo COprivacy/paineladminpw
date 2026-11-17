@@ -22,7 +22,8 @@ import { RarityBadge } from '@/components/common/RarityBadge';
 import {
   Plus,
   Search,
-  Sparkles,
+  Layers,
+  Film,
   Flame,
   Crown,
   Coins,
@@ -41,6 +42,10 @@ import {
   ArrowRight,
   Shield,
   Zap,
+  Award,
+  Store,
+  UserCheck,
+  X,
 } from 'lucide-react';
 
 export default function AdminPWShopPage() {
@@ -284,8 +289,8 @@ export default function AdminPWShopPage() {
               <span className="w-2 h-2 rounded-full bg-[#23a55a] animate-ping" />
               <span>{syncNotice.msg}</span>
             </div>
-            <button onClick={() => setSyncNotice(null)} className="text-[#949ba4] hover:text-white">
-              ✕
+            <button onClick={() => setSyncNotice(null)} className="text-[#949ba4] hover:text-white p-1">
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         )}
@@ -308,7 +313,7 @@ export default function AdminPWShopPage() {
                 <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#201533] via-[#1f2338] to-[#121c2b] border border-[#383a40] p-6 shadow-xl">
                   <div className="relative z-10 max-w-xl space-y-2">
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#5865f2]/20 border border-[#5865f2]/40 text-[#5865f2] text-xs font-bold uppercase tracking-wider">
-                      <Sparkles className="w-3.5 h-3.5" /> Loja Integrada do PW
+                      <Store className="w-3.5 h-3.5" /> Loja Integrada do PW
                     </div>
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
                       Loja de Colecionáveis & Cosméticos
@@ -327,7 +332,7 @@ export default function AdminPWShopPage() {
                         onClick={() => openCreateModal('profile_effect')}
                         className="bg-[#2b2d31] hover:bg-[#35373c] border border-[#383a40] text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-purple-400" /> Adicionar Efeito de Perfil
+                        <Layers className="w-3.5 h-3.5 text-purple-400" /> Adicionar Efeito de Perfil
                       </button>
                       <button
                         onClick={() => setIsGrantModalOpen(true)}
@@ -404,8 +409,8 @@ export default function AdminPWShopPage() {
                                 className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-300"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-[#2b2d31] via-transparent to-transparent" />
-                              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-purple-300">
-                                <Sparkles className="w-3 h-3 text-purple-400" />
+                              <div className="absolute bottom-2 left-2 flex items-center gap-1.5 bg-black/70 backdrop-blur-md px-2.5 py-0.5 rounded text-[10px] text-purple-300">
+                                <Film className="w-3 h-3 text-purple-400" />
                                 <span>Efeito Animado</span>
                               </div>
                             </div>
@@ -465,7 +470,8 @@ export default function AdminPWShopPage() {
                               <span>R$ {item.priceBRL.toFixed(2)}</span>
                             </div>
                             <div className="text-[11px] font-semibold text-[#f0b232] flex items-center gap-1">
-                              <span>🪙 {item.priceCoins.toLocaleString('pt-BR')} Coins</span>
+                              <Coins className="w-3.5 h-3.5 text-[#f0b232]" />
+                              <span>{item.priceCoins.toLocaleString('pt-BR')} Coins</span>
                             </div>
                           </div>
 
@@ -528,7 +534,11 @@ export default function AdminPWShopPage() {
                     >
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl">{sub.badgeIcon}</span>
+                          <div className="p-2 rounded-xl bg-[#1e1f22]">
+                            {sub.id === 'nitro_basic' && <Zap className="w-6 h-6 text-[#5865F2]" />}
+                            {sub.id === 'nitro_booster' && <Award className="w-6 h-6 text-[#F47FFF]" />}
+                            {sub.id === 'nitro_ultimate' && <Crown className="w-6 h-6 text-[#F0B232]" />}
+                          </div>
                           <span
                             className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase"
                             style={{ backgroundColor: `${sub.color}22`, color: sub.color }}
@@ -551,7 +561,7 @@ export default function AdminPWShopPage() {
                         </div>
 
                         <div className="p-3 bg-[#1e1f22] rounded-xl border border-[#313338] text-xs space-y-1">
-                          <div className="text-[#f0b232] font-bold flex items-center gap-1">
+                          <div className="text-[#f0b232] font-bold flex items-center gap-1.5">
                             <Coins className="w-3.5 h-3.5" />
                             <span>+{sub.monthlyCoinsBonus} PW Coins mensais</span>
                           </div>
@@ -656,7 +666,8 @@ export default function AdminPWShopPage() {
 
                           <td className="px-4 py-3">
                             <span className="font-bold text-[#f0b232] flex items-center gap-1">
-                              🪙 {usr.coinsBalance.toLocaleString('pt-BR')}
+                              <Coins className="w-3.5 h-3.5" />
+                              {usr.coinsBalance.toLocaleString('pt-BR')}
                             </span>
                           </td>
 
@@ -664,12 +675,14 @@ export default function AdminPWShopPage() {
                             <div className="space-y-0.5">
                               {usr.activeDecoration && (
                                 <div className="text-[11px] text-[#5865f2] flex items-center gap-1">
-                                  <span>🎭 {usr.activeDecoration.title}</span>
+                                  <UserCheck className="w-3 h-3 text-[#5865f2]" />
+                                  <span>{usr.activeDecoration.title}</span>
                                 </div>
                               )}
                               {usr.activeEffect && (
                                 <div className="text-[11px] text-purple-400 flex items-center gap-1">
-                                  <span>✨ {usr.activeEffect.title}</span>
+                                  <Layers className="w-3 h-3 text-purple-400" />
+                                  <span>{usr.activeEffect.title}</span>
                                 </div>
                               )}
                               {!usr.activeDecoration && !usr.activeEffect && (
@@ -726,13 +739,16 @@ export default function AdminPWShopPage() {
                     <span className="text-xs font-bold uppercase text-[#949ba4]">Faturamento Bruto</span>
                     <div className="text-2xl font-extrabold text-white">R$ 1.284,50</div>
                     <div className="text-[11px] text-[#23a55a] flex items-center gap-1">
-                      <span>↑ +18.4% esta semana</span>
+                      <span>+18.4% esta semana</span>
                     </div>
                   </div>
 
                   <div className="bg-[#2b2d31] p-5 rounded-2xl border border-[#383a40] space-y-1">
                     <span className="text-xs font-bold uppercase text-[#949ba4]">Moedas (Coins) Gastas</span>
-                    <div className="text-2xl font-extrabold text-[#f0b232]">🪙 48.200</div>
+                    <div className="text-2xl font-extrabold text-[#f0b232] flex items-center gap-1.5">
+                      <Coins className="w-6 h-6" />
+                      <span>48.200</span>
+                    </div>
                     <div className="text-[11px] text-[#949ba4]">Em cosméticos na loja</div>
                   </div>
 
@@ -771,7 +787,10 @@ export default function AdminPWShopPage() {
                             {ord.amountBRL > 0 ? (
                               <span className="text-white">R$ {ord.amountBRL.toFixed(2)}</span>
                             ) : (
-                              <span className="text-[#f0b232]">🪙 {ord.amountCoins} Coins</span>
+                              <span className="text-[#f0b232] flex items-center gap-1">
+                                <Coins className="w-3.5 h-3.5" />
+                                {ord.amountCoins} Coins
+                              </span>
                             )}
                           </td>
                           <td className="px-4 py-3 uppercase text-[10px] font-semibold text-[#949ba4]">

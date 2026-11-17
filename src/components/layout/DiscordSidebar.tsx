@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   ShoppingBag,
-  Sparkles,
+  Layers,
   Crown,
   Coins,
   Package,
@@ -197,7 +197,7 @@ export const DiscordSidebar: React.FC<DiscordSidebarProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    <Layers className="w-4 h-4 text-purple-400" />
                     <span>efeitos-de-perfil</span>
                   </div>
                   <span className="text-[10px] bg-[#1e1f22] px-1.5 py-0.5 rounded text-[#949ba4]">
